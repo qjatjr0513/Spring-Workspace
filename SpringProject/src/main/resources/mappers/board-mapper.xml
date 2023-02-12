@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="boardMapper">
+
+	<resultMap id="boardResultSet" type="board">
+		<result column="BOARD_NO" property="boardNo" />
+		<result column="BOARD_TITLE" property="boardTitle" />
+		<result column="USER_ID" property="boardWriter" />
+		<result column="COUNT" property="count" />
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="BOARD_CONTENT" property="boardContent" />
+		<result column="ORIGIN_NAME_AT" property="originName" />
+		<result column="CHANGE_NAME_AT" property="changeName" />
+		<result column="BOARD_CD" property="boardCd" />
+		<collection property="list" resultMap="replyResultSet"/>
+		<!-- 방법2. -->
+		<collection property="imgList" resultMap="boardImgResultSet"/>
+		
+		<!-- 방법1. -->
+<!-- 		<collection property="imgList" column="BOARD_NO" javaType="java.util.ArrayList" -->
+<!-- 			ofType="boardImg" select="selectImgList"/> -->
+
+
+		<!-- 
+			select="selectImgList"의 조회결과를 board vo 객체의 imgList필드에 담겠다는 의미.
+			-> imgList에 담을때 java.util.ArrayList<BoardImg> 객체를 생성해서 담음.
+			-> selectImgList 호출할때 필요한 데이터(boardNo) 전달하는 용도로 column="BOARD_NO"를 사용
+		 -->
+	</resultMap>
+	
+	<resultMap id="replyResultSet" type="reply">
+		<id     column="REPLY_NO" property="replyNo"/>
+		<result column="REPLY_CONTENT" property="replyContent"/>
+		<result column="CREATE_DATE" property="createDate"/>
+		<result column="STATUS" property="status"/>
+		<association property="member" javaType="member">
+			<id     column="USER_NO" property="userNo"/>
+	 		<result column="USER_ID" property="userId"/>
+		</association>
+	</resultMap>
+	
+	<resultMap type="boardType" id="boardTypeResultSet">
+		<id column="BOARD_CD" property="boardCd"/>
+		<result column="BOARD_NAME" property="boardName"/>
+	</resultMap>
+	
+	<resultMap type="boardImg" id="boardImgResultSet">
+		<id property="boardImgNo" column="BOARD_IMG_NO"/>
+		<result property="originName" column="ORIGIN_NAME"/>
+		<result property="changeName" column="CHANGE_NAME"/>
+		<result property="refBno" column="REF_BNO"/>
+		<result property="imgLevel" column="IMG_LEVEL"/>
+	</resultMap>
+	
+	<select id="selectImgList" resultMap="boardImgResultSet">
+		SELECT * 
+		FROM BOARD_IMG
+		WHERE REF_BNO = #{boardNo}
+		ORDER BY IMG_LEVEL
+	</select>
+	
+	<select id="selectBoardTypeList" resultMap="boardTypeResultSet">
+		SELECT * 
+		FROM BOARD_TYPE
+		ORDER BY BOARD_CD
+	</select>
+	
+	<select id="selectListCount" resultType="Integer">
+		SELECT COUNT(*)
+		FROM BOARD
+		WHERE STATUS = 'Y' AND BOARD_CD = #{boardCode}
+	</select>
+	
+	<select id="selectList" resultMap="boardResultSet">
+		SELECT
+		BOARD_NO,
+		BOARD_TITLE,
+		USER_ID,
+		COUNT,
+		CREATE_DATE,
+		B.ORIGIN_NAME AS ORIGIN_NAME_AT
+		FROM BOARD B
+		JOIN MEMBER ON (BOARD_WRITER = USER_NO)
+		WHERE B.STATUS = 'Y' AND BOARD_CD = #{boardCode}
+		ORDER BY BOARD_NO DESC 
+	</select>
+	
+	<insert id="insertBoard" parameterType="board" useGeneratedKeys="true">
+		
+		<selectKey keyProperty="boardNo" resultType="_int" order="BEFORE">
+			SELECT SEQ_BNO.NEXTVAL FROM DUAL
+		</selectKey>
+	
+		INSERT INTO BOARD(
+			BOARD_NO,
+			BOARD_TITLE,
+			BOARD_WRITER,
+			BOARD_CONTENT,
+			ORIGIN_NAME,
+			CHANGE_NAME,
+			BOARD_CD
+		)VALUES(
+			#{boardNo},
+			#{boardTitle},
+			#{boardWriter},
+			#{boardContent},
+			#{originName},
+			#{changeName},
+			#{boardCd}
+		)
+		
+	</insert>
+	
+	<insert id="insertBoardImgList" parameterType="list">
+		INSERT INTO BOARD_IMG
+		SELECT SEQ_IMG_NO.NEXTVAL AS IMG_NO , C.* FROM
+		(
+		<foreach collection="list" item="img" separator="UNION ALL">
+			SELECT #{img.originName} as ORIGIN_NAME, 
+			       #{img.changeName} as CHANGE_NAME,
+			       #{img.refBno} as REF_BNO,
+			       #{img.imgLevel} as IMG_LEVEL
+			FROM DUAL
+		</foreach>
+		) C
+	</insert>
+	
+	<update id="increaseCount" parameterType="Integer">
+		UPDATE BOARD
+		SET COUNT = COUNT + 1
+		WHERE BOARD_NO = #{bno}
+	</update>
+	 
+	<select id="selectBoard" parameterType="Integer" resultMap="boardResultSet">
+	<!-- 방법1. -->
+<!-- 		SELECT -->
+<!-- 			BOARD_NO, -->
+<!-- 			BOARD_TITLE, -->
+<!-- 			M.USER_ID, -->
+<!-- 			M.USER_NO, -->
+<!-- 			B.BOARD_WRITER, -->
+<!-- 			COUNT, -->
+<!-- 			B.CREATE_DATE, -->
+<!-- 			BOARD_CONTENT, -->
+<!-- 			REPLY_NO, -->
+<!-- 			REPLY_CONTENT, -->
+<!-- 			B.ORIGIN_NAME AS ORIGIN_NAME_AT, -->
+<!-- 			B.CHANGE_NAME AS CHANGE_NAME_AT, -->
+<!-- 			B.BOARD_CD, -->
+<!-- 			M2.USER_ID AS REPLY_USER_ID, -->
+<!-- 			R.CREATE_DATE AS REPLY_CREATE_DATE -->
+<!-- 		FROM BOARD B -->
+<!-- 		JOIN MEMBER M ON (BOARD_WRITER = USER_NO) -->
+<!-- 		LEFT JOIN REPLY R ON (BOARD_NO = REF_BNO) -->
+<!-- 		LEFT JOIN MEMBER M2 ON (REPLY_WRITER = M2.USER_NO) -->
+<!-- 		WHERE BOARD_NO = #{bno} AND B.STATUS='Y' -->
+
+<!-- 방법 2. -->
+<!-- 	SELECT -->
+<!--          BOARD_NO ,  -->
+<!--          B.BOARD_WRITER ,  -->
+<!--          BOARD_TITLE , -->
+<!--          COUNT , -->
+<!--          BOARD_CONTENT ,  -->
+<!--          B.ORIGIN_NAME AS ORIGIN_NAME_AT, -->
+<!--          B.CHANGE_NAME AS CHANGE_NAME_AT, -->
+<!--          BI.* -->
+<!--    FROM BOARD B -->
+<!--    LEFT JOIN BOARD_IMG BI ON (B.BOARD_NO = BI.REF_BNO) -->
+<!--    WHERE BOARD_NO = #{bno}   -->
+    
+		SELECT
+			BOARD_NO,
+			BOARD_TITLE,
+			M.USER_ID,
+			M.USER_NO,
+			B.BOARD_WRITER,
+			COUNT,
+			B.CREATE_DATE,
+			BOARD_CONTENT,
+			B.ORIGIN_NAME AS ORIGIN_NAME_AT,
+			B.CHANGE_NAME AS CHANGE_NAME_AT,
+			B.BOARD_CD,
+			BI.*
+		FROM BOARD B
+		JOIN MEMBER M ON (BOARD_WRITER = USER_NO)
+		LEFT JOIN BOARD_IMG BI ON (B.BOARD_NO = BI.REF_BNO)
+		WHERE BOARD_NO = #{bno} AND B.STATUS='Y'
+	</select>
+	
+	<select id="selectReplyList" parameterType="Integer" resultMap="replyResultSet">
+		SELECT REPLY_NO , REPLY_CONTENT, R.CREATE_DATE, USER_NO, USER_ID, R.STATUS
+		FROM
+		REPLY R
+		JOIN MEMBER ON (R.REPLY_WRITER  = USER_NO)
+		WHERE R.REF_BNO = #{bno} AND R.STATUS = 'Y'
+		ORDER BY R.CREATE_DATE DESC
+	</select>
+	
+	<insert id="insertReply" parameterType="reply">
+		INSERT INTO REPLY(REPLY_NO , REPLY_CONTENT , REF_BNO , REPLY_WRITER)
+		VALUES(SEQ_RNO.NEXTVAL , #{replyContent} , #{refBno } , #{replyWriter})
+	</insert>
+	
+	<select id="selectSearchCount" parameterType="hashmap" resultType="Integer">
+		SELECT COUNT(*)
+		FROM BOARD B
+		JOIN MEMBER ON (B.BOARD_WRITER = USER_NO)
+		WHERE B.STATUS = 'Y'
+		<if test="condition == 'writer'">
+			AND USER_ID
+		</if>
+		<if test="condition == 'title'">
+			AND BOARD_TITLE
+		</if>
+		<if test="condition == 'content'">
+			AND BOARD_CONTENT
+		</if>
+			LIKE '%' || #{keyword} ||'%'
+	</select>
+	
+<!-- 	<select id="selectSearchList" parameterType="hashmap" resultMap="boardResultSet"> -->
+<!-- 		SELECT  -->
+<!-- 			BOARD_NO, -->
+<!-- 			BOARD_TITLE, -->
+<!-- 			USER_ID, -->
+<!-- 			COUNT, -->
+<!-- 			ORIGIN_NAME, -->
+<!-- 			CREATE_DATE -->
+<!-- 		FROM BOARD B -->
+<!-- 		JOIN MEMBER ON(B.BOARD_WRITER = USER_NO) -->
+<!-- 		WHERE B.STATUS = 'Y' -->
+<!-- 		<if test="condition == 'writer'"> -->
+<!-- 			AND USER_ID -->
+<!-- 		</if> -->
+<!-- 		<if test="condition == 'title'"> -->
+<!-- 			AND BOARD_TITLE -->
+<!-- 		</if> -->
+<!-- 		<if test="condition == 'content'"> -->
+<!-- 			AND BOARD_CONTENT -->
+<!-- 		</if> -->
+<!-- 		LIKE '%' || #{keyword} || '%' -->
+<!-- 		ORDER BY BOARD_NO DESC -->
+<!-- 	</select> -->
+	
+	<select id="selectFileList" resultType="String">
+		SELECT
+        SUBSTR(CHANGE_NAME , INSTR(CHANGE_NAME, '/', 1, 2) +1)
+	    FROM BOARD
+	    WHERE CHANGE_NAME IS NOT NULL AND STATUS = 'Y'
+	</select>
+	
+	<update id="deleteBoard" parameterType="Integer">
+		UPDATE BOARD
+		SET STATUS = 'N'
+		WHERE BOARD_NO = #{bno}
+	</update>
+	
+	
+	<select id="searchList" resultMap="boardResultSet">
+		SELECT
+			BOARD_NO,
+			BOARD_TITLE,
+			USER_ID,
+			COUNT,
+			B.CREATE_DATE,
+			ORIGIN_NAME
+		FROM BOARD B
+		LEFT JOIN MEMBER M ON (BOARD_WRITER = USER_NO)
+		WHERE B.STATUS = 'Y' AND BOARD_CD = #{boardCode}
+		<!-- 검색어가 있는 경우-->
+		<if test='keyword != null and keyword !=""'>
+			AND 
+			<choose>
+				<when test="condition == 'title'">
+					BOARD_TITLE LIKE '%${keyword}%' <!-- 문자열로 치환하고 한번에 넣는걸 추천(안전한 방법이 아니기 때문에 실무에서는 사용하는걸 추천하지 않음) -->
+				</when>
+				<when test="condition == 'content' ">
+					BOARD_CONTENT LIKE '%${keyword}%'
+				</when>
+				<when test="condition == 'titleAndContent'">
+					(BOARD_TITLE LIKE '%${keyword}%' 
+						OR
+					BOARD_CONTENT LIKE '%${keyword}%')
+				</when>
+				<when test="condition == 'writer'">
+					USER_ID LIKE '%${keyword}%'
+				</when>
+			</choose>
+		</if>
+		
+		ORDER BY B.CREATE_DATE DESC
+	</select>
+	
+	<select id="searchListCount" resultType="Integer">
+		SELECT COUNT(*)
+		FROM BOARD B
+		LEFT JOIN MEMBER M ON (BOARD_WRITER = USER_NO)
+		WHERE B.STATUS = 'Y' AND BOARD_CD = #{boardCode}
+		<if test='keyword != null and keyword !=""'>
+			AND 
+			<choose>
+				<when test="condition == 'title'">
+					BOARD_TITLE LIKE '%${keyword}%' <!-- 문자열로 치환하고 한번에 넣는걸 추천(안전한 방법이 아니기 때문에 실무에서는 사용하는걸 추천하지 않음) -->
+				</when>
+				<when test="condition == 'content' ">
+					BOARD_CONTENT LIKE '%${keyword}%'
+				</when>
+				<when test="condition == 'titleAndContent'">
+					(BOARD_TITLE LIKE '%${keyword}%' 
+						OR
+					BOARD_CONTENT LIKE '%${keyword}%')
+				</when>
+				<when test="condition == 'writer'">
+					USER_ID LIKE '%${keyword}%'
+				</when>
+			</choose>
+		</if>
+		
+	</select>
+	
+	<!-- 게시글 수정 -->
+	<update id="updateBoard" parameterType="board">
+		UPDATE BOARD
+		SET BOARD_TITLE = #{boardTitle},
+			BOARD_CONTENT = #{boardContent},
+			ORIGIN_NAME = #{originName} ,
+			CHANGE_NAME = #{changeName} 
+		WHERE BOARD_NO = #{boardNo}
+	</update>
+	
+	<!-- 게시글 이미지 1개 단위로 수정. -->
+	<update id="updateBoardImg" parameterType="boardImg">
+		UPDATE BOARD_IMG SET
+			ORIGIN_NAME = #{originName},
+			CHANGE_NAME = #{changeName}
+		WHERE REF_BNO = #{refBno} AND IMG_LEVEL = #{imgLevel}
+	</update>
+	
+	<insert id="insertBoardImg" parameterType="boardImg">
+		INSERT INTO BOARD_IMG VALUES(
+			SEQ_IMG_NO.NEXTVAL,
+			#{originName},
+			#{changeName},
+			#{refBno},
+			#{imgLevel,}
+		)
+	</insert>
+	
+	<!-- 게시글 이미지만 삭제 -->
+	<delete id="deleteBoardImage" parameterType="map">
+		DELETE FROM BOARD_IMG
+		WHERE REF_BNO = #{boardNo} 
+		AND IMG_LEVEL IN(${deleteList}) <!-- AND IMG_LEVEL IN(1, 2, 3) --> <!-- $표시는 위험한방식(sqlInjection 공격 때문) -->
+	</delete>
+</mapper>

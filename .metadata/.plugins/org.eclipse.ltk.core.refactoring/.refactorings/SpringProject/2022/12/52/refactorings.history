@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;SpringProject/src/main/java/com/kh/spring/chat/model/vo/ChatJoin.java&apos; to &apos;ChatRoomJoin.java&apos;" description="Rename resource &apos;ChatJoin.java&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/main/java/com/kh/spring/chat/model/vo/ChatJoin.java" name="ChatRoomJoin.java" stamp="1671713057003" updateReferences="true"/>
+</session>

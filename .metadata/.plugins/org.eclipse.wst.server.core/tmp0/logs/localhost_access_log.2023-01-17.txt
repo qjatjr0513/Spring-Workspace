@@ -1,0 +1,14 @@
+127.0.0.1 - - [17/Jan/2023:20:48:57 +0900] "GET / HTTP/1.1" 404 807
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:07 +0900] "GET /spring HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:09 +0900] "GET /spring/ HTTP/1.1" 200 6695
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:10 +0900] "GET /favicon.ico HTTP/1.1" 404 818
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:15 +0900] "POST /spring/login.me HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:15 +0900] "GET /spring/ HTTP/1.1" 200 6609
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:16 +0900] "GET /spring/board/list/C HTTP/1.1" 200 11112
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:18 +0900] "GET /spring/board/detail/C/55 HTTP/1.1" 200 11019
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:18 +0900] "GET /spring/board/detail/C/reply.bo?bno=55 HTTP/1.1" 400 843
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:20 +0900] "GET /spring/board/enrollForm/C?mode=update&bno=55 HTTP/1.1" 200 8289
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:23 +0900] "POST /spring/board/insert/C HTTP/1.1" 302 -
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:23 +0900] "GET /spring/board/list/C HTTP/1.1" 200 11240
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:25 +0900] "GET /spring/board/detail/C/55 HTTP/1.1" 200 11016
+0:0:0:0:0:0:0:1 - - [17/Jan/2023:20:49:25 +0900] "GET /spring/board/detail/C/reply.bo?bno=55 HTTP/1.1" 400 843
